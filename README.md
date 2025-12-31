@@ -12,15 +12,19 @@ The application serves as a Proof of Concept (PoC) for visualizing large dataset
 -   **Detail View**: Interactive info cards (Google Maps style) that allow users to inspect specific details (Name, Suburb, Dates) for each laboratory.
 -   **Data Stats**: Real-time counter showing the total number of records loaded to verify data integrity.
 
+<<<<<<< HEAD
 ## Prerequisites
 -   A modern web browser (Chrome, Firefox, Edge, Safari).
 -   No build process required (Static HTML/JS).
 
+=======
+>>>>>>> 9f2d87400ff93c9278f9eb1489183d4284244b18
 ## Usage
 1.  Open `index.html` in your browser.
 2.  **Login Credentials**:
     -   **Email**: `juan.mora@tbtbglobal.com`
     -   **Password**: `1234567890`
+<<<<<<< HEAD
 3.  Navigate the map and click on blue markers to view details.
 
 ## Technologies
@@ -39,3 +43,10 @@ web_dist/
 
 ---
 *Developed for TBTB Global / Visualization Demo*
+=======
+
+## Technologies
+-   **Frontend**: HTML5, CSS3, Vanilla JavaScript.
+-   **Mapping Engine**: Mapbox GL JS v2.15.
+-   **Data Format**: GeoJSON.
+>>>>>>> 9f2d87400ff93c9278f9eb1489183d4284244b18
