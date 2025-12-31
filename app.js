@@ -72,25 +72,42 @@ function initMap() {
 // 3. Data Fetching and GeoJSON Conversion
 async function fetchLabsData() {
     try {
+        console.log("Iniciando fetch de:", CONFIG.DATA_URL);
         const response = await fetch(CONFIG.DATA_URL);
+
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+        }
+
         const json = await response.json();
+        console.log("JSON cargado, registros:", json.length);
 
         // Convert to GeoJSON
-        const features = json.map(lab => ({
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [parseFloat(lab.longitude), parseFloat(lab.latitude)]
-            },
-            properties: {
-                id: lab.laboratory,
-                name: lab['ACC Name'],
-                location: lab['Suburb / Town'] || 'No disponible',
-                dates: `${lab['From Date']} - ${lab['To Date']}`,
-                acc: lab.ACC,
-                apa: lab['APA Number']
+        const features = json.map(lab => {
+            // Validate coordinates
+            const lng = parseFloat(lab.longitude);
+            const lat = parseFloat(lab.latitude);
+
+            if (isNaN(lng) || isNaN(lat)) {
+                return null; // Skip invalid points
             }
-        }));
+
+            return {
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [lng, lat]
+                },
+                properties: {
+                    id: lab.laboratory,
+                    name: lab['ACC Name'],
+                    location: lab['Suburb / Town'] || 'No disponible',
+                    dates: `${lab['From Date']} - ${lab['To Date']}`,
+                    acc: lab.ACC,
+                    apa: lab['APA Number']
+                }
+            };
+        }).filter(f => f !== null); // Filter out nulls
 
         return {
             type: 'FeatureCollection',
@@ -98,12 +115,25 @@ async function fetchLabsData() {
         };
     } catch (error) {
         console.error("Error cargando datos:", error);
+        loadingSpinner.innerHTML = `
+            <div style="color: #ef4444; text-align: center;">
+                <p><strong>Error cargando datos</strong></p>
+                <p style="font-size: 0.8em; margin-top: 0.5em;">${error.message}</p>
+                <p style="font-size: 0.7em; color: #64748b; margin-top: 1em;">Verifique que 'labs_with_coordinates.json' esté en la misma carpeta.</p>
+            </div>
+        `;
         return null;
     }
 }
 
 // 4. Map Layers and Interaction
 function setupMapLayers(geojsonData) {
+    // Check if source already exists to avoid errors on reload
+    if (map.getSource('labs')) {
+        map.getSource('labs').setData(geojsonData);
+        return;
+    }
+
     map.addSource('labs', {
         type: 'geojson',
         data: geojsonData,
