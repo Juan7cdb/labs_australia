@@ -41,32 +41,59 @@ loginForm.addEventListener('submit', (e) => {
 
 // 2. Map Initialization
 function initMap() {
-    mapboxgl.accessToken = CONFIG.MAPBOX_TOKEN;
+    // Show spinner immediately when starting map load
+    loadingSpinner.classList.add('visible');
+    loadingSpinner.innerHTML = '<div class="spinner"></div><p>Iniciando mapa...</p>';
 
-    map = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: [133.7751, -25.2744], // Center of Australia
-        zoom: 4
-    });
+    try {
+        mapboxgl.accessToken = CONFIG.MAPBOX_TOKEN;
 
-    map.on('load', async () => {
-        // Show spinner
-        loadingSpinner.classList.add('visible');
+        map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [133.7751, -25.2744], // Center of Australia
+            zoom: 4
+        });
 
-        const data = await fetchLabsData();
+        // Handle Map Loading Errors (e.g. Invalid Token)
+        map.on('error', (e) => {
+            console.error("Mapbox Error:", e);
+            loadingSpinner.innerHTML = `
+                <div style="color: #ef4444; max-width: 300px;">
+                    <p><strong>Error del Mapa</strong></p>
+                    <p style="font-size: 0.8em;">${e.error ? e.error.message : 'No se pudo cargar el mapa.'}</p>
+                    <p style="font-size: 0.7em; margin-top: 10px;">Verifique su Token de Mapbox en app.js</p>
+                </div>
+            `;
+        });
 
-        if (data) {
-            setupMapLayers(data);
+        map.on('load', async () => {
+            loadingSpinner.innerHTML = '<div class="spinner"></div><p>Cargando datos...</p>';
 
-            // Update counter and hide spinner
-            recordCountEl.innerText = data.features.length.toLocaleString();
-            statsCounter.classList.remove('hidden');
-            loadingSpinner.classList.remove('visible');
-        } else {
-            loadingSpinner.innerHTML = '<p style="color:red">Error cargando datos</p>';
-        }
-    });
+            const data = await fetchLabsData();
+
+            if (data) {
+                setupMapLayers(data);
+
+                // Update counter and hide spinner
+                recordCountEl.innerText = data.features.length.toLocaleString();
+                statsCounter.classList.remove('hidden');
+                loadingSpinner.classList.remove('visible');
+            } else {
+                loadingSpinner.innerHTML = `
+                    <div style="color: #ef4444;">
+                        <p>Error cargando datos</p>
+                    </div>`;
+            }
+        });
+
+    } catch (err) {
+        loadingSpinner.innerHTML = `
+            <div style="color: #ef4444;">
+                <p>Error crítico de inicialización</p>
+                <p style="font-size: 0.8rem">${err.message}</p>
+            </div>`;
+    }
 }
 
 // 3. Data Fetching and GeoJSON Conversion
