@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Australia Lab Map</title>
+
+    <!-- Mapbox GL JS -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>Bienvenido</h1>
+                <p>Ingresa tus credenciales para acceder al mapa</p>
+            </div>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required placeholder="juan.mora@tbtbglobal.com">
+                </div>
+                <div class="input-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary">Entrar</button>
+                <div id="login-error" class="error-msg"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner">
+        <div class="spinner"></div>
+        <p>Cargando datos...</p>
+    </div>
+
+    <!-- Stats Counter -->
+    <div id="stats-counter" class="hidden">
+        <span class="count-number" id="record-count">0</span>
+        <span class="count-label">Laboratorios</span>
+    </div>
+
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- Info Card (Slide-out/Floating) -->
+    <div id="info-card" class="card-hidden">
+        <button id="close-card" class="close-btn">&times;</button>
+        <div id="card-content">
+            <h2 id="lab-name">Nombre del Laboratorio</h2>
+            <div class="detail-row">
+                <span class="label">Ubicación:</span>
+                <span id="lab-location">Cargando...</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Periodo:</span>
+                <span id="lab-dates">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">ACC ID:</span>
+                <span id="lab-acc">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">APA Number:</span>
+                <span id="lab-apa">-</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
