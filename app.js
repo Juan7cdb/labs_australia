@@ -4,7 +4,7 @@ const CONFIG = {
         email: "juan.mora@tbtbglobal.com",
         password: "1234567890"
     },
-    MAPBOX_TOKEN: 'pk.eyJ1IjoianVhbmRhdmlkbTAxIiwiYSI6ImNtNWJtdmtkbzBic2syanNjZzloMWJucGkifQ.YmX4q044T4OUnw3JExU-0g', // Placeholder - User should update if needed
+    MAPBOX_TOKEN: 'pk.eyJ1IjoianVhbm1vcmF0YnRiIiwiYSI6ImNtanNwYm1qZDR1bHMzZ3B1bjNjbTNoZXYifQ.bG22dEMZDYR_fjzyrLv_dA', // Token provided by user
     DATA_URL: './labs_with_coordinates.json'
 };
 
