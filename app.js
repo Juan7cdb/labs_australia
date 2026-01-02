@@ -19,9 +19,15 @@ const closeCardBtn = document.getElementById('close-card');
 const loadingSpinner = document.getElementById('loading-spinner');
 const statsCounter = document.getElementById('stats-counter');
 const recordCountEl = document.getElementById('record-count');
+const searchContainer = document.getElementById('search-container');
+const searchInput = document.getElementById('search-input');
+const locationFilter = document.getElementById('location-filter');
+const searchResults = document.getElementById('search-results');
 
 // State
 let map;
+let labsData = []; // Store original data for searching
+let geojsonData = null; // Store GeoJSON for map
 
 // 1. Authentication Logic
 loginForm.addEventListener('submit', (e) => {
@@ -74,10 +80,13 @@ function initMap() {
 
             if (data) {
                 setupMapLayers(data);
+                populateLocationFilter();
+                setupSearchListeners();
 
-                // Update counter and hide spinner
+                // Update counter, show search, and hide spinner
                 recordCountEl.innerText = data.features.length.toLocaleString();
                 statsCounter.classList.remove('hidden');
+                searchContainer.classList.remove('hidden');
                 loadingSpinner.classList.remove('visible');
             } else {
                 loadingSpinner.innerHTML = `
@@ -109,6 +118,9 @@ async function fetchLabsData() {
         const json = await response.json();
         console.log("JSON cargado, registros:", json.length);
 
+        // Store original data for searching
+        labsData = json;
+
         // Convert to GeoJSON
         const features = json.map(lab => {
             // Validate coordinates
@@ -136,10 +148,12 @@ async function fetchLabsData() {
             };
         }).filter(f => f !== null); // Filter out nulls
 
-        return {
+        geojsonData = {
             type: 'FeatureCollection',
             features: features
         };
+
+        return geojsonData;
     } catch (error) {
         console.error("Error cargando datos:", error);
         loadingSpinner.innerHTML = `
@@ -275,3 +289,149 @@ function showInfoCard(props) {
 closeCardBtn.addEventListener('click', () => {
     infoCard.classList.add('card-hidden');
 });
+
+// 6. Search and Filter Functionality
+function populateLocationFilter() {
+    const states = new Set();
+
+    labsData.forEach(lab => {
+        const location = lab['Suburb / Town'] || '';
+        // Extract state from location string (e.g., "EAST MELBOURNE VIC 3002" -> "VIC")
+        const stateMatch = location.match(/\b(NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\b/i);
+        if (stateMatch) {
+            states.add(stateMatch[0].toUpperCase());
+        }
+    });
+
+    // Sort states alphabetically
+    const sortedStates = Array.from(states).sort();
+
+    sortedStates.forEach(state => {
+        const option = document.createElement('option');
+        option.value = state;
+        option.textContent = state;
+        locationFilter.appendChild(option);
+    });
+}
+
+function setupSearchListeners() {
+    // Search input listener
+    searchInput.addEventListener('input', performSearch);
+
+    // Location filter listener
+    locationFilter.addEventListener('change', performSearch);
+
+    // Click outside to close results
+    document.addEventListener('click', (e) => {
+        if (!searchContainer.contains(e.target)) {
+            searchResults.classList.add('search-results-hidden');
+        }
+    });
+}
+
+function performSearch() {
+    const query = searchInput.value.trim().toLowerCase();
+    const selectedState = locationFilter.value;
+
+    // Clear results if query is empty
+    if (!query && !selectedState) {
+        searchResults.classList.add('search-results-hidden');
+        searchResults.innerHTML = '';
+        return;
+    }
+
+    // Filter labs based on query and state
+    const filtered = labsData.filter(lab => {
+        // State filter
+        if (selectedState) {
+            const location = lab['Suburb / Town'] || '';
+            if (!location.toUpperCase().includes(selectedState)) {
+                return false;
+            }
+        }
+
+        // Text search filter (if query exists)
+        if (query) {
+            const name = (lab['ACC Name'] || '').toLowerCase();
+            const acc = (lab.ACC || '').toString().toLowerCase();
+            const apa = (lab['APA Number'] || '').toString().toLowerCase();
+            const address = (lab.Address || '').toLowerCase();
+            const suburb = (lab['Suburb / Town'] || '').toLowerCase();
+
+            return name.includes(query) ||
+                acc.includes(query) ||
+                apa.includes(query) ||
+                address.includes(query) ||
+                suburb.includes(query);
+        }
+
+        return true;
+    });
+
+    displaySearchResults(filtered);
+}
+
+function displaySearchResults(results) {
+    if (results.length === 0) {
+        searchResults.innerHTML = '<div class="no-results">No se encontraron resultados</div>';
+        searchResults.classList.remove('search-results-hidden');
+        return;
+    }
+
+    // Limit to 50 results for performance
+    const limitedResults = results.slice(0, 50);
+
+    searchResults.innerHTML = limitedResults.map(lab => {
+        const name = lab['ACC Name'] || 'Sin nombre';
+        const location = lab['Suburb / Town'] || 'Ubicación no disponible';
+
+        return `
+            <div class="search-result-item" data-lab-id="${lab.laboratory}">
+                <div class="result-name">${name}</div>
+                <div class="result-location">${location}</div>
+            </div>
+        `;
+    }).join('');
+
+    // Add click listeners to results
+    searchResults.querySelectorAll('.search-result-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const labId = item.dataset.labId;
+            navigateToLab(labId);
+        });
+    });
+
+    searchResults.classList.remove('search-results-hidden');
+}
+
+function navigateToLab(labId) {
+    // Find the lab in the data
+    const lab = labsData.find(l => l.laboratory === labId);
+
+    if (!lab) return;
+
+    const lng = parseFloat(lab.longitude);
+    const lat = parseFloat(lab.latitude);
+
+    if (isNaN(lng) || isNaN(lat)) return;
+
+    // Fly to the location
+    map.flyTo({
+        center: [lng, lat],
+        zoom: 14,
+        duration: 2000
+    });
+
+    // Show info card
+    showInfoCard({
+        name: lab['ACC Name'],
+        location: lab['Suburb / Town'] || 'No disponible',
+        dates: `${lab['From Date']} - ${lab['To Date']}`,
+        acc: lab.ACC,
+        apa: lab['APA Number']
+    });
+
+    // Hide search results
+    searchResults.classList.add('search-results-hidden');
+    searchInput.value = '';
+}
