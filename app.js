@@ -140,10 +140,11 @@ async function fetchLabsData() {
                 properties: {
                     id: lab.laboratory,
                     name: lab['ACC Name'],
-                    location: lab['Suburb / Town'] || 'No disponible',
-                    dates: `${lab['From Date']} - ${lab['To Date']}`,
-                    acc: lab.ACC,
-                    apa: lab['APA Number']
+                    apa: lab['APA Number'],
+                    labNetwork: lab['Lab Network'] || '',
+                    address: lab.Address || 'No disponible',
+                    latitude: lat.toFixed(6),
+                    longitude: lng.toFixed(6)
                 }
             };
         }).filter(f => f !== null); // Filter out nulls
@@ -277,11 +278,13 @@ function setupMapLayers(geojsonData) {
 
 // 5. UI Interaction (Info Card)
 function showInfoCard(props) {
-    document.getElementById('lab-name').textContent = props.name;
-    document.getElementById('lab-location').textContent = props.location;
-    document.getElementById('lab-dates').textContent = props.dates;
-    document.getElementById('lab-acc').textContent = props.acc;
-    document.getElementById('lab-apa').textContent = props.apa;
+    document.getElementById('lab-name').textContent = props.name || 'N/A';
+    document.getElementById('lab-acc-name').textContent = props.name || 'N/A';
+    document.getElementById('lab-apa').textContent = props.apa || 'N/A';
+    document.getElementById('lab-network').textContent = props.labNetwork || '-';
+    document.getElementById('lab-address').textContent = props.address || 'N/A';
+    document.getElementById('lab-latitude').textContent = props.latitude || 'N/A';
+    document.getElementById('lab-longitude').textContent = props.longitude || 'N/A';
 
     infoCard.classList.remove('card-hidden');
 }
@@ -425,10 +428,11 @@ function navigateToLab(labId) {
     // Show info card
     showInfoCard({
         name: lab['ACC Name'],
-        location: lab['Suburb / Town'] || 'No disponible',
-        dates: `${lab['From Date']} - ${lab['To Date']}`,
-        acc: lab.ACC,
-        apa: lab['APA Number']
+        apa: lab['APA Number'],
+        labNetwork: lab['Lab Network'] || '',
+        address: lab.Address || 'No disponible',
+        latitude: lat.toFixed(6),
+        longitude: lng.toFixed(6)
     });
 
     // Hide search results
