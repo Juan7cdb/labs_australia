@@ -1,7 +1,11 @@
 // Configuration
 const CONFIG = {
     CREDENTIALS: {
-        email: "juan.mora@tbtbglobal.com",
+        allowedEmails: [
+            "juan.mora@tbtbglobal.com",
+            "rodrigo@tbtbglobal.com",
+            "andrea.villalba@tbtbglobal.com"
+        ],
         password: "1234567890"
     },
     MAPBOX_TOKEN: 'pk.eyJ1IjoianVhbm1vcmF0YnRiIiwiYSI6ImNtanNwYm1qZDR1bHMzZ3B1bjNjbTNoZXYifQ.bG22dEMZDYR_fjzyrLv_dA', // Token provided by user
@@ -37,7 +41,8 @@ loginForm.addEventListener('submit', (e) => {
     const email = emailInput.value.trim();
     const password = passwordInput.value;
 
-    if (email === CONFIG.CREDENTIALS.email && password === CONFIG.CREDENTIALS.password) {
+    // Check if email is in allowed list and password matches
+    if (CONFIG.CREDENTIALS.allowedEmails.includes(email) && password === CONFIG.CREDENTIALS.password) {
         loginOverlay.classList.add('hidden');
         initMap();
     } else {
