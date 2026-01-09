@@ -22,6 +22,7 @@ const recordCountEl = document.getElementById('record-count');
 const searchContainer = document.getElementById('search-container');
 const searchInput = document.getElementById('search-input');
 const locationFilter = document.getElementById('location-filter');
+const networkFilter = document.getElementById('network-filter');
 const searchResults = document.getElementById('search-results');
 
 // State
@@ -81,6 +82,7 @@ function initMap() {
             if (data) {
                 setupMapLayers(data);
                 populateLocationFilter();
+                populateNetworkFilter();
                 setupSearchListeners();
 
                 // Update counter, show search, and hide spinner
@@ -317,12 +319,36 @@ function populateLocationFilter() {
     });
 }
 
+function populateNetworkFilter() {
+    const networks = new Set();
+
+    labsData.forEach(lab => {
+        const network = lab['Lab Network'];
+        if (network && network.trim() !== '') {
+            networks.add(network.trim());
+        }
+    });
+
+    // Sort networks alphabetically
+    const sortedNetworks = Array.from(networks).sort();
+
+    sortedNetworks.forEach(network => {
+        const option = document.createElement('option');
+        option.value = network;
+        option.textContent = network;
+        networkFilter.appendChild(option);
+    });
+}
+
 function setupSearchListeners() {
     // Search input listener
     searchInput.addEventListener('input', performSearch);
 
     // Location filter listener
     locationFilter.addEventListener('change', performSearch);
+
+    // Network filter listener
+    networkFilter.addEventListener('change', performSearch);
 
     // Click outside to close results
     document.addEventListener('click', (e) => {
@@ -335,9 +361,10 @@ function setupSearchListeners() {
 function performSearch() {
     const query = searchInput.value.trim().toLowerCase();
     const selectedState = locationFilter.value;
+    const selectedNetwork = networkFilter.value;
 
     // Clear results if query is empty
-    if (!query && !selectedState) {
+    if (!query && !selectedState && !selectedNetwork) {
         searchResults.classList.add('search-results-hidden');
         searchResults.innerHTML = '';
         return;
@@ -353,6 +380,14 @@ function performSearch() {
             }
         }
 
+        // Network filter
+        if (selectedNetwork) {
+            const labNetwork = lab['Lab Network'] || '';
+            if (labNetwork !== selectedNetwork) {
+                return false;
+            }
+        }
+
         // Text search filter (if query exists)
         if (query) {
             const name = (lab['ACC Name'] || '').toLowerCase();
@@ -360,12 +395,14 @@ function performSearch() {
             const apa = (lab['APA Number'] || '').toString().toLowerCase();
             const address = (lab.Address || '').toLowerCase();
             const suburb = (lab['Suburb / Town'] || '').toLowerCase();
+            const network = (lab['Lab Network'] || '').toLowerCase();
 
             return name.includes(query) ||
                 acc.includes(query) ||
                 apa.includes(query) ||
                 address.includes(query) ||
-                suburb.includes(query);
+                suburb.includes(query) ||
+                network.includes(query);
         }
 
         return true;
