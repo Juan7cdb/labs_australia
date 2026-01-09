@@ -337,6 +337,24 @@ h3 {
     border-color: var(--primary);
 }
 
+#network-filter {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    min-width: 200px;
+}
+
+#network-filter:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+
 #search-results {
     margin-top: 0.5rem;
     background: var(--card-bg);

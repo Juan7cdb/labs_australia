@@ -345,10 +345,16 @@ function setupSearchListeners() {
     searchInput.addEventListener('input', performSearch);
 
     // Location filter listener
-    locationFilter.addEventListener('change', performSearch);
+    locationFilter.addEventListener('change', () => {
+        performSearch();
+        updateMapData();
+    });
 
     // Network filter listener
-    networkFilter.addEventListener('change', performSearch);
+    networkFilter.addEventListener('change', () => {
+        performSearch();
+        updateMapData();
+    });
 
     // Click outside to close results
     document.addEventListener('click', (e) => {
@@ -356,6 +362,52 @@ function setupSearchListeners() {
             searchResults.classList.add('search-results-hidden');
         }
     });
+}
+
+// Update Map Data based on filters
+function updateMapData() {
+    const selectedState = locationFilter.value;
+    const selectedNetwork = networkFilter.value;
+
+    // If no filters, show all data
+    if (!selectedState && !selectedNetwork) {
+        map.getSource('labs').setData(geojsonData);
+        return;
+    }
+
+    // Filter the data
+    const filteredFeatures = geojsonData.features.filter(feature => {
+        const labId = feature.properties.id;
+        const lab = labsData.find(l => l.laboratory === labId);
+
+        if (!lab) return false;
+
+        // State filter
+        if (selectedState) {
+            const location = lab['Suburb / Town'] || '';
+            if (!location.toUpperCase().includes(selectedState)) {
+                return false;
+            }
+        }
+
+        // Network filter
+        if (selectedNetwork) {
+            const labNetwork = lab['Lab Network'] || '';
+            if (labNetwork !== selectedNetwork) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+
+    // Update the map source with filtered data
+    const filteredGeoJSON = {
+        type: 'FeatureCollection',
+        features: filteredFeatures
+    };
+
+    map.getSource('labs').setData(filteredGeoJSON);
 }
 
 function performSearch() {
