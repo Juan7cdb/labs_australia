@@ -9,7 +9,7 @@ const CONFIG = {
         password: "1234567890"
     },
     MAPBOX_TOKEN: 'pk.eyJ1IjoianVhbm1vcmF0YnRiIiwiYSI6ImNtanNwYm1qZDR1bHMzZ3B1bjNjbTNoZXYifQ.bG22dEMZDYR_fjzyrLv_dA', // Token provided by user
-    DATA_URL: './labs_with_coordinates.json'
+    DATA_URL: './labs_with_coordinates_new.json'
 };
 
 // DOM Elements
