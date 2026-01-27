@@ -25,7 +25,7 @@ const statsCounter = document.getElementById('stats-counter');
 const recordCountEl = document.getElementById('record-count');
 const searchContainer = document.getElementById('search-container');
 const searchInput = document.getElementById('search-input');
-const locationFilter = document.getElementById('location-filter');
+
 const networkFilter = document.getElementById('network-filter');
 const searchResults = document.getElementById('search-results');
 
@@ -86,7 +86,7 @@ function initMap() {
 
             if (data) {
                 setupMapLayers(data);
-                populateLocationFilter();
+
                 populateNetworkFilter();
                 setupSearchListeners();
 
@@ -301,28 +301,7 @@ closeCardBtn.addEventListener('click', () => {
 });
 
 // 6. Search and Filter Functionality
-function populateLocationFilter() {
-    const states = new Set();
 
-    labsData.forEach(lab => {
-        const location = lab['Suburb / Town'] || '';
-        // Extract state from location string (e.g., "EAST MELBOURNE VIC 3002" -> "VIC")
-        const stateMatch = location.match(/\b(NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\b/i);
-        if (stateMatch) {
-            states.add(stateMatch[0].toUpperCase());
-        }
-    });
-
-    // Sort states alphabetically
-    const sortedStates = Array.from(states).sort();
-
-    sortedStates.forEach(state => {
-        const option = document.createElement('option');
-        option.value = state;
-        option.textContent = state;
-        locationFilter.appendChild(option);
-    });
-}
 
 function populateNetworkFilter() {
     const networks = new Set();
@@ -349,11 +328,7 @@ function setupSearchListeners() {
     // Search input listener
     searchInput.addEventListener('input', performSearch);
 
-    // Location filter listener
-    locationFilter.addEventListener('change', () => {
-        performSearch();
-        updateMapData();
-    });
+
 
     // Network filter listener
     networkFilter.addEventListener('change', () => {
@@ -371,11 +346,11 @@ function setupSearchListeners() {
 
 // Update Map Data based on filters
 function updateMapData() {
-    const selectedState = locationFilter.value;
+
     const selectedNetwork = networkFilter.value;
 
     // If no filters, show all data
-    if (!selectedState && !selectedNetwork) {
+    if (!selectedNetwork) {
         map.getSource('labs').setData(geojsonData);
         return;
     }
@@ -387,13 +362,7 @@ function updateMapData() {
 
         if (!lab) return false;
 
-        // State filter
-        if (selectedState) {
-            const location = lab['Suburb / Town'] || '';
-            if (!location.toUpperCase().includes(selectedState)) {
-                return false;
-            }
-        }
+
 
         // Network filter
         if (selectedNetwork) {
@@ -417,11 +386,11 @@ function updateMapData() {
 
 function performSearch() {
     const query = searchInput.value.trim().toLowerCase();
-    const selectedState = locationFilter.value;
+
     const selectedNetwork = networkFilter.value;
 
     // Clear results if query is empty
-    if (!query && !selectedState && !selectedNetwork) {
+    if (!query && !selectedNetwork) {
         searchResults.classList.add('search-results-hidden');
         searchResults.innerHTML = '';
         return;
@@ -429,13 +398,7 @@ function performSearch() {
 
     // Filter labs based on query and state
     const filtered = labsData.filter(lab => {
-        // State filter
-        if (selectedState) {
-            const location = lab['Suburb / Town'] || '';
-            if (!location.toUpperCase().includes(selectedState)) {
-                return false;
-            }
-        }
+
 
         // Network filter
         if (selectedNetwork) {
