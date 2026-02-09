@@ -4,7 +4,10 @@ const CONFIG = {
         allowedEmails: [
             "juan.mora@tbtbglobal.com",
             "rodrigo@tbtbglobal.com",
-            "andrea.villalba@tbtbglobal.com"
+            "andrea.villalba@tbtbglobal.com",
+            "nicole.westacott@sanofi.com",
+            "bevan.sweerts@sanofi.com",
+            "eugenie.loisance@sanofi.com"
         ],
         password: "1234567890"
     },
@@ -449,6 +452,11 @@ function updateMapData() {
     // If "all" is selected or array is empty (implicit all?), show all data
     if (selectedNetworks.includes('all')) {
         map.getSource('labs').setData(geojsonData);
+
+        // Update counter to show all labs
+        if (geojsonData && geojsonData.features) {
+            recordCountEl.innerText = geojsonData.features.length.toLocaleString();
+        }
         return;
     }
 
@@ -470,6 +478,9 @@ function updateMapData() {
 
         return true;
     });
+
+    // Update counter with filtered count
+    recordCountEl.innerText = filteredFeatures.length.toLocaleString();
 
     // Update the map source with filtered data
     const filteredGeoJSON = {
