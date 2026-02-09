@@ -337,7 +337,14 @@ h3 {
     border-color: var(--primary);
 }
 
-#network-filter {
+/* Custom Multi-select Dropdown */
+.custom-dropdown {
+    position: relative;
+    min-width: 220px;
+}
+
+#network-filter-btn {
+    width: 100%;
     padding: 0.75rem 1rem;
     border: 1px solid #e2e8f0;
     border-radius: 0.5rem;
@@ -345,13 +352,64 @@ h3 {
     font-size: 0.95rem;
     background: white;
     cursor: pointer;
-    transition: border-color 0.2s;
-    min-width: 200px;
+    transition: border-color 0.2s, background 0.2s;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-#network-filter:focus {
-    outline: none;
-    border-color: var(--primary);
+#network-filter-btn:after {
+    content: '▼';
+    font-size: 0.7em;
+    margin-left: 10px;
+    color: var(--text-muted);
+}
+
+#network-filter-btn:hover {
+    background: #f8fafc;
+}
+
+.dropdown-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 2000;
+    margin-top: 5px;
+    padding: 0.5rem 0;
+}
+
+.dropdown-content.hidden-dropdown {
+    display: none;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+
+.dropdown-item:hover {
+    background: #f1f5f9;
+}
+
+.dropdown-item input[type="checkbox"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
 }
 
 

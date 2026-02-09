@@ -26,8 +26,11 @@ const recordCountEl = document.getElementById('record-count');
 const searchContainer = document.getElementById('search-container');
 const searchInput = document.getElementById('search-input');
 
-const networkFilter = document.getElementById('network-filter');
+const networkFilterBtn = document.getElementById('network-filter-btn');
+const networkFilterContent = document.getElementById('network-filter-content');
 const searchResults = document.getElementById('search-results');
+
+let selectedNetworks = ['all']; // Default to all
 
 // State
 let map;
@@ -46,7 +49,7 @@ loginForm.addEventListener('submit', (e) => {
         loginOverlay.classList.add('hidden');
         initMap();
     } else {
-        errorMsg.textContent = "Credenciales incorrectas. Intente de nuevo.";
+        errorMsg.textContent = "Incorrect credentials. Please try again.";
         setTimeout(() => { errorMsg.textContent = ""; }, 3000);
     }
 });
@@ -55,7 +58,7 @@ loginForm.addEventListener('submit', (e) => {
 function initMap() {
     // Show spinner immediately when starting map load
     loadingSpinner.classList.add('visible');
-    loadingSpinner.innerHTML = '<div class="spinner"></div><p>Iniciando mapa...</p>';
+    loadingSpinner.innerHTML = '<div class="spinner"></div><p>Starting map...</p>';
 
     try {
         mapboxgl.accessToken = CONFIG.MAPBOX_TOKEN;
@@ -72,15 +75,15 @@ function initMap() {
             console.error("Mapbox Error:", e);
             loadingSpinner.innerHTML = `
                 <div style="color: #ef4444; max-width: 300px;">
-                    <p><strong>Error del Mapa</strong></p>
-                    <p style="font-size: 0.8em;">${e.error ? e.error.message : 'No se pudo cargar el mapa.'}</p>
-                    <p style="font-size: 0.7em; margin-top: 10px;">Verifique su Token de Mapbox en app.js</p>
+                    <p><strong>Map Error</strong></p>
+                    <p style="font-size: 0.8em;">${e.error ? e.error.message : 'Could not load map.'}</p>
+                    <p style="font-size: 0.7em; margin-top: 10px;">Check your Mapbox Token in app.js</p>
                 </div>
             `;
         });
 
         map.on('load', async () => {
-            loadingSpinner.innerHTML = '<div class="spinner"></div><p>Cargando datos...</p>';
+            loadingSpinner.innerHTML = '<div class="spinner"></div><p>Loading data...</p>';
 
             const data = await fetchLabsData();
 
@@ -98,7 +101,7 @@ function initMap() {
             } else {
                 loadingSpinner.innerHTML = `
                     <div style="color: #ef4444;">
-                        <p>Error cargando datos</p>
+                        <p>Error loading data</p>
                     </div>`;
             }
         });
@@ -106,7 +109,7 @@ function initMap() {
     } catch (err) {
         loadingSpinner.innerHTML = `
             <div style="color: #ef4444;">
-                <p>Error crítico de inicialización</p>
+                <p>Critical initialization error</p>
                 <p style="font-size: 0.8rem">${err.message}</p>
             </div>`;
     }
@@ -166,9 +169,9 @@ async function fetchLabsData() {
         console.error("Error cargando datos:", error);
         loadingSpinner.innerHTML = `
             <div style="color: #ef4444; text-align: center;">
-                <p><strong>Error cargando datos</strong></p>
+                <p><strong>Error loading data</strong></p>
                 <p style="font-size: 0.8em; margin-top: 0.5em;">${error.message}</p>
-                <p style="font-size: 0.7em; color: #64748b; margin-top: 1em;">Verifique que 'labs_with_coordinates.json' esté en la misma carpeta.</p>
+                <p style="font-size: 0.7em; color: #64748b; margin-top: 1em;">Verify that 'labs_with_coordinates.json' is in the same folder.</p>
             </div>
         `;
         return null;
@@ -290,6 +293,7 @@ function showInfoCard(props) {
     document.getElementById('lab-apa').textContent = props.apa || 'N/A';
     document.getElementById('lab-network').textContent = props.labNetwork || '-';
     document.getElementById('lab-address').textContent = props.address || 'N/A';
+    document.getElementById('lab-postcode').textContent = props.postal_code || 'N/A';
     document.getElementById('lab-latitude').textContent = props.latitude || 'N/A';
     document.getElementById('lab-longitude').textContent = props.longitude || 'N/A';
 
@@ -316,41 +320,133 @@ function populateNetworkFilter() {
     // Sort networks alphabetically
     const sortedNetworks = Array.from(networks).sort();
 
+    // Clear existing content
+    networkFilterContent.innerHTML = '';
+
+    // Add "Watch all labs" option
+    // Default is checked
+    const allOption = createCheckboxOption('all', 'Watch all labs', true);
+    networkFilterContent.appendChild(allOption);
+
+    // Add separator or just list others
     sortedNetworks.forEach(network => {
-        const option = document.createElement('option');
-        option.value = network;
-        option.textContent = network;
-        networkFilter.appendChild(option);
+        const isSelected = selectedNetworks.includes(network);
+        const option = createCheckboxOption(network, network, isSelected);
+        networkFilterContent.appendChild(option);
     });
+}
+
+function createCheckboxOption(value, labelText, isChecked) {
+    const item = document.createElement('div');
+    item.className = 'dropdown-item';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = value;
+    checkbox.checked = isChecked;
+
+    // Checkbox Listener
+    checkbox.addEventListener('change', (e) => {
+        handleNetworkSelection(value, e.target.checked);
+    });
+
+    // Label
+    const label = document.createElement('span');
+    label.textContent = labelText;
+
+    // Click on item toggles checkbox
+    item.addEventListener('click', (e) => {
+        if (e.target !== checkbox) {
+            checkbox.checked = !checkbox.checked;
+            handleNetworkSelection(value, checkbox.checked);
+        }
+    });
+
+    item.appendChild(checkbox);
+    item.appendChild(label);
+
+    return item;
+}
+
+function handleNetworkSelection(value, isChecked) {
+    if (value === 'all') {
+        if (isChecked) {
+            selectedNetworks = ['all'];
+            // Uncheck all other checkboxes in UI
+            const checkboxes = networkFilterContent.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                if (cb.value !== 'all') cb.checked = false;
+            });
+        } else {
+            // "All" cannot be unchecked manually without selecting something else. 
+            // If user unchecks "All" and nothing else is selected, maybe keep it checked?
+            // User requirement: "Watch all labs" default.
+            // Let's allow uncheck, which means 0 selected. 
+            selectedNetworks = selectedNetworks.filter(n => n !== 'all');
+        }
+    } else {
+        // Specific network
+        if (isChecked) {
+            selectedNetworks = selectedNetworks.filter(n => n !== 'all');
+            selectedNetworks.push(value);
+
+            // Uncheck "All" in UI
+            const allCheckbox = networkFilterContent.querySelector('input[value="all"]');
+            if (allCheckbox) allCheckbox.checked = false;
+        } else {
+            selectedNetworks = selectedNetworks.filter(n => n !== value);
+        }
+    }
+
+    // If nothing selected, maybe fallback to All?
+    // "Selecting a specific network will automatically deselect 'Watch all labs'." - Done
+    // "Selecting 'Watch all labs' will automatically deselect all specific networks" - Done
+
+    if (selectedNetworks.length === 0) {
+        // Optional: Force All if nothing selected.
+        // selectedNetworks = ['all'];
+        // const allCheckbox = networkFilterContent.querySelector('input[value="all"]');
+        // if (allCheckbox) allCheckbox.checked = true;
+    }
+
+    updateFilterButtonText();
+    performSearch();
+    updateMapData();
+}
+
+function updateFilterButtonText() {
+    if (selectedNetworks.includes('all') || selectedNetworks.length === 0) {
+        networkFilterBtn.childNodes[0].nodeValue = 'Watch all labs';
+    } else {
+        const count = selectedNetworks.length;
+        networkFilterBtn.childNodes[0].nodeValue = `${count} Network${count > 1 ? 's' : ''} selected`;
+    }
 }
 
 function setupSearchListeners() {
     // Search input listener
     searchInput.addEventListener('input', performSearch);
 
-
-
-    // Network filter listener
-    networkFilter.addEventListener('change', () => {
-        performSearch();
-        updateMapData();
+    // Toggle Dropdown
+    networkFilterBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        networkFilterContent.classList.toggle('hidden-dropdown');
     });
 
-    // Click outside to close results
+    // Click outside to close results and dropdown
     document.addEventListener('click', (e) => {
+        // Close search results
         if (!searchContainer.contains(e.target)) {
             searchResults.classList.add('search-results-hidden');
+            networkFilterContent.classList.add('hidden-dropdown');
         }
     });
 }
 
 // Update Map Data based on filters
 function updateMapData() {
-
-    const selectedNetwork = networkFilter.value;
-
-    // If no filters, show all data
-    if (!selectedNetwork) {
+    // If "all" is selected or array is empty (implicit all?), show all data
+    if (selectedNetworks.includes('all')) {
         map.getSource('labs').setData(geojsonData);
         return;
     }
@@ -362,12 +458,11 @@ function updateMapData() {
 
         if (!lab) return false;
 
-
-
         // Network filter
-        if (selectedNetwork) {
+        if (selectedNetworks.length > 0) {
             const labNetwork = lab['Lab Network'] || '';
-            if (labNetwork !== selectedNetwork) {
+            // Trim and check
+            if (!selectedNetworks.includes(labNetwork.trim())) {
                 return false;
             }
         }
@@ -387,10 +482,8 @@ function updateMapData() {
 function performSearch() {
     const query = searchInput.value.trim().toLowerCase();
 
-    const selectedNetwork = networkFilter.value;
-
     // Clear results if query is empty
-    if (!query && !selectedNetwork) {
+    if (!query) {
         searchResults.classList.add('search-results-hidden');
         searchResults.innerHTML = '';
         return;
@@ -399,11 +492,11 @@ function performSearch() {
     // Filter labs based on query and state
     const filtered = labsData.filter(lab => {
 
-
-        // Network filter
-        if (selectedNetwork) {
-            const labNetwork = lab['Lab Network'] || '';
-            if (labNetwork !== selectedNetwork) {
+        // Multi-select Network filter
+        // If 'all' is NOT selected, we must check if lab is in selectedNetworks
+        if (!selectedNetworks.includes('all') && selectedNetworks.length > 0) {
+            const labNetwork = (lab['Lab Network'] || '').trim();
+            if (!selectedNetworks.includes(labNetwork)) {
                 return false;
             }
         }
@@ -433,7 +526,7 @@ function performSearch() {
 
 function displaySearchResults(results) {
     if (results.length === 0) {
-        searchResults.innerHTML = '<div class="no-results">No se encontraron resultados</div>';
+        searchResults.innerHTML = '<div class="no-results">No results found</div>';
         searchResults.classList.remove('search-results-hidden');
         return;
     }
@@ -442,8 +535,8 @@ function displaySearchResults(results) {
     const limitedResults = results.slice(0, 50);
 
     searchResults.innerHTML = limitedResults.map(lab => {
-        const name = lab['ACC Name'] || 'Sin nombre';
-        const location = lab['Suburb / Town'] || 'Ubicación no disponible';
+        const name = lab['ACC Name'] || 'No name';
+        const location = lab['Suburb / Town'] || 'Location not available';
 
         return `
             <div class="search-result-item" data-lab-id="${lab.laboratory}">
@@ -487,7 +580,7 @@ function navigateToLab(labId) {
         name: lab['ACC Name'],
         apa: lab['APA Number'],
         labNetwork: lab['Lab Network'] || '',
-        address: lab.Address || 'No disponible',
+        address: lab.Address || 'Not available',
         latitude: lat.toFixed(6),
         longitude: lng.toFixed(6)
     });
