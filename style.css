@@ -217,7 +217,7 @@ h3 {
 /* Info Card Styles */
 #info-card {
     position: absolute;
-    top: 20px;
+    top: 100px;
     left: 20px;
     width: 350px;
     background: white;
