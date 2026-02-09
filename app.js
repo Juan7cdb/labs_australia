@@ -153,6 +153,7 @@ async function fetchLabsData() {
                     apa: lab['APA Number'],
                     labNetwork: lab['Lab Network'] || '',
                     address: lab.Address || 'No disponible',
+                    postal_code: lab.postal_code || '',
                     latitude: lat.toFixed(6),
                     longitude: lng.toFixed(6)
                 }
@@ -581,6 +582,7 @@ function navigateToLab(labId) {
         apa: lab['APA Number'],
         labNetwork: lab['Lab Network'] || '',
         address: lab.Address || 'Not available',
+        postal_code: lab.postal_code || '',
         latitude: lat.toFixed(6),
         longitude: lng.toFixed(6)
     });
